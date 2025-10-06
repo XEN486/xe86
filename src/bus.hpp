@@ -37,13 +37,13 @@ namespace xe86 {
 
 	/*
 	SYSTEM MEMORY MAP
-		FFFFF - [TOP OF ADDRESS SPACE]         __ 
-		FE000 - Start of GLaBIOS ROM             |
-		F6000 - Start of Base System ROM area    | -- BIOS
-		F0000 - Reserved                       __|
-		C0000 - Start of Expansion Memory area __| -- ROM
-		A0000 - Start of "128KB" area          __| -- GRAPHICS
-		00000 - Start of RAM area              __| -- RAM
+		FFFFF - [TOP OF ADDRESS SPACE]			__
+		FE000 - Start of GLaBIOS ROM			  | -- BIOS
+		F6000 - Start of Base System ROM area	__|
+		F0000 - Reserved						  | -- ROM
+		C0000 - Start of Expansion Memory area	__|
+		A0000 - Start of "128KB" area			__| -- GRAPHICS
+		00000 - Start of RAM area				__| -- RAM
 	*/
 	class Bus {
 	public:

@@ -1,8 +1,9 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
-#include "bus.hpp"
+#include "component.hpp"
 #include "types.hpp"
+
 #include <functional>
 #include <memory>
 
@@ -43,20 +44,20 @@ namespace xe86 {
 		Flags flags; // FLAGS - flags
 	};
 
-	class CPU {
+	class CPU : public Component {
 	public:
-		CPU(std::shared_ptr<Bus> bus) : m_Bus(bus) {
+		CPU(std::shared_ptr<Bus> bus) : Component(bus, "CPU") {
 			m_Functions.resize(256);
 			std::fill(m_Functions.begin(), m_Functions.end(), [=]() { InvalidOpcode(); });
 		}
 
-		void Reset() {
+		void Reset() override {
 			// CS:IP = FFFF:0000 on 8086
 			m_Registers.cs = 0xffff;
 			m_Registers.ip = 0x0000;
 		}
 
-		void Step();
+		void Step() override;
 
 	private:
 		void InvalidOpcode();
@@ -64,7 +65,6 @@ namespace xe86 {
 	private:
 		Registers m_Registers;
 		std::vector<std::function<void()>> m_Functions;
-		std::shared_ptr<Bus> m_Bus;
 	};
 }
 
