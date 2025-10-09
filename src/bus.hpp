@@ -10,7 +10,7 @@ namespace xe86 {
 	class MemoryArea {
 	public:
 		MemoryArea(Address20 start, Address20 end, bool readable, bool writable)
-			: m_Start(start), m_End(end), m_Length(end - start + 1), m_Area(end - start + 1, 0), m_Readable(readable), m_Writable(writable) {}
+			: m_Start(start), m_End(end), m_Length(end - start + 1), m_Area(m_Length, 0), m_Readable(readable), m_Writable(writable) {}
 
 		std::vector<uint8_t>& GetArea() { return m_Area; }
 
@@ -25,11 +25,11 @@ namespace xe86 {
 		void LoadFromFile(std::string_view filename, size_t offset);
 
 	private:
-		std::vector<uint8_t> m_Area;
-
 		Address20 m_Start;
 		Address20 m_End;
 		size_t m_Length;
+
+		std::vector<uint8_t> m_Area;
 
 		bool m_Readable;
 		bool m_Writable;

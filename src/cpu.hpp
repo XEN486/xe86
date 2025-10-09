@@ -48,7 +48,7 @@ namespace xe86 {
 	public:
 		CPU(std::shared_ptr<Bus> bus) : Component(bus, "CPU") {
 			m_Functions.resize(256);
-			std::fill(m_Functions.begin(), m_Functions.end(), [=]() { InvalidOpcode(); });
+			std::fill(m_Functions.begin(), m_Functions.end(), [=, this]() { InvalidOpcode(); });
 		}
 
 		void Reset() override {
