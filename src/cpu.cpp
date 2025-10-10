@@ -13,8 +13,20 @@ void CPU::InvalidOpcode() {
 	exit(1);
 }
 
+void CPU::SetOpcodes() {
+	// EA - JMP Ap
+	m_Functions[0xea] = [this]() {
+		// if we update CS and IP directly then it will read from the wrong address
+		uint16_t new_ip = Fetch16();
+		uint16_t new_cs = Fetch16();
+
+		m_Registers.ip = new_ip;
+		m_Registers.cs = new_cs;
+	};
+}
+
 void CPU::Step() {
-	uint8_t opcode = m_Bus->ReadByte(Address20(m_Registers.cs, m_Registers.ip++));
+	uint8_t opcode = Fetch8();
 	std::println("{:02x}", opcode);
 	m_Functions[opcode]();
 }

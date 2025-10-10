@@ -47,8 +47,12 @@ namespace xe86 {
 	class CPU : public Component {
 	public:
 		CPU(std::shared_ptr<Bus> bus) : Component(bus, "CPU") {
+			// fill m_Functions with invalid opcodes
 			m_Functions.resize(256);
-			std::fill(m_Functions.begin(), m_Functions.end(), [=, this]() { InvalidOpcode(); });
+			std::fill(m_Functions.begin(), m_Functions.end(), [this]() { InvalidOpcode(); });
+
+			// now set the proper opcodes
+			SetOpcodes();
 		}
 
 		void Reset() override {
@@ -61,6 +65,17 @@ namespace xe86 {
 
 	private:
 		void InvalidOpcode();
+		void SetOpcodes();
+
+		uint8_t Fetch8() {
+			return m_Bus->ReadByte(Address20(m_Registers.cs, m_Registers.ip++));
+		}
+
+		uint16_t Fetch16() {
+			uint8_t lo = Fetch8();
+			uint8_t hi = Fetch8();
+			return (hi << 8) | lo;
+		}
 		
 	private:
 		Registers m_Registers;
