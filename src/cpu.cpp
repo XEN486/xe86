@@ -15,5 +15,6 @@ void CPU::InvalidOpcode() {
 
 void CPU::Step() {
 	uint8_t opcode = m_Bus->ReadByte(Address20(m_Registers.cs, m_Registers.ip++));
+	std::println("{:02x}", opcode);
 	m_Functions[opcode]();
 }

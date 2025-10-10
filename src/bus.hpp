@@ -5,12 +5,14 @@
 #include <vector>
 #include <string>
 #include <print>
+#include <memory>
 
 namespace xe86 {
 	class MemoryArea {
 	public:
 		MemoryArea(Address20 start, Address20 end, bool readable, bool writable)
-			: m_Start(start), m_End(end), m_Length(end - start + 1), m_Area(m_Length, 0), m_Readable(readable), m_Writable(writable) {}
+			: m_Start(start), m_End(end), m_Length(end - start + 1), m_Area(m_Length, 0), 
+			  m_Readable(readable), m_Writable(writable) {}
 
 		std::vector<uint8_t>& GetArea() { return m_Area; }
 
@@ -22,7 +24,35 @@ namespace xe86 {
 		bool IsWritable() { return m_Writable; }
 
 		void LoadFromFile(std::string_view filename);
-		void LoadFromFile(std::string_view filename, size_t offset);
+
+		uint8_t ReadByte(Address20 offset) {
+			if (!m_Readable) {
+				std::println(stderr, "attempted to read from unreadable memory area [{:05x} -> {:05x}] @ off. {:05x}",
+					static_cast<uint32_t>(GetStartAddress()),
+					static_cast<uint32_t>(GetEndAddress()),
+					static_cast<uint32_t>(offset)
+				);
+
+				return 0;
+			}
+
+			return m_Area[offset];
+		}
+
+		void WriteByte(Address20 offset, uint8_t byte) {
+			if (!m_Writable) {
+				std::println(stderr, "attempted to write {:02x} to unwritable memory area [{:05x} -> {:05x}] @ off. {:05x}",
+					static_cast<uint8_t>(byte),
+					static_cast<uint32_t>(GetStartAddress()),
+					static_cast<uint32_t>(GetEndAddress()),
+					static_cast<uint32_t>(offset)
+				);
+
+				return;
+			}
+			
+			m_Area[offset] = byte;
+		}
 
 	private:
 		Address20 m_Start;
@@ -40,19 +70,17 @@ namespace xe86 {
 		FFFFF - [TOP OF ADDRESS SPACE]			__
 		FE000 - Start of GLaBIOS ROM			  | -- BIOS
 		F6000 - Start of Base System ROM area	__|
-		F0000 - Reserved						  | -- ROM
-		C0000 - Start of Expansion Memory area	__|
+		F0000 - Reserved						__| -- RESERVED
+		C0000 - Start of Expansion Memory area	__| -- ROM
 		A0000 - Start of "128KB" area			__| -- GRAPHICS
 		00000 - Start of RAM area				__| -- RAM
 	*/
 	class Bus {
 	public:
 		Bus(std::string_view bios_rom) {
-			m_Memory.emplace_back(0xf6000, 0xfffff, true, false);	// BIOS ROM
-			m_Memory.emplace_back(0xc0000, 0xeffff, true, false);	// Expansion ROM
-			m_Memory.emplace_back(0xa0000, 0xbffff, true, true);	// Graphics
-			m_Memory.emplace_back(0x00000, 0x9ffff, true, true);	// RAM
-			m_Memory[0].LoadFromFile(bios_rom, 0x8000);
+			AttachMemoryArea(std::make_shared<MemoryArea>(0xfe000, 0xfffff, true, false));	// GLaBIOS ROM
+			AttachMemoryArea(std::make_shared<MemoryArea>(0x00000, 0x9ffff, true, true));	// RAM
+			m_Memory[0]->LoadFromFile(bios_rom);
 		}
 
 		uint8_t ReadByte(Address20 address);
@@ -67,9 +95,13 @@ namespace xe86 {
 			WriteByte(address + 1, (word >> 8) & 0xff);
 		}
 
+		void AttachMemoryArea(std::shared_ptr<MemoryArea> area) {
+			m_Memory.push_back(area);
+		}
+
 	private:
-		std::vector<MemoryArea> m_Memory;
-		MemoryArea* FindArea(Address20 address);
+		std::vector<std::shared_ptr<MemoryArea>> m_Memory;
+		std::shared_ptr<MemoryArea> FindArea(Address20 address);
 	};
 }
 
