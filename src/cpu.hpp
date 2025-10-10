@@ -76,6 +76,15 @@ namespace xe86 {
 			uint8_t hi = Fetch8();
 			return (hi << 8) | lo;
 		}
+
+		void ClearFlag(Flags flag) {
+			// maybe i shouldnt use enum class
+			m_Registers.flags = static_cast<Flags>(static_cast<uint16_t>(m_Registers.flags) & ~static_cast<uint16_t>(flag));
+		}
+
+		void SetFlag(Flags flag) {
+			m_Registers.flags = static_cast<Flags>(static_cast<uint16_t>(m_Registers.flags) | static_cast<uint16_t>(flag));
+		}
 		
 	private:
 		Registers m_Registers;

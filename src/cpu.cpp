@@ -23,6 +23,16 @@ void CPU::SetOpcodes() {
 		m_Registers.ip = new_ip;
 		m_Registers.cs = new_cs;
 	};
+
+	// FA - CLI
+	m_Functions[0xfa] = [this]() {
+		ClearFlag(Flags::IF); // interrupt flag
+	};
+
+	// FC - CLD
+	m_Functions[0xfc] = [this]() {
+		ClearFlag(Flags::DF); // direction flag
+	};
 }
 
 void CPU::Step() {
