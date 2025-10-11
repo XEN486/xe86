@@ -58,6 +58,62 @@ void CPU::SetOpcodes() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
 	};
+
+	// F7 - GRP3b Ev
+	m_Functions[0xf7] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Group);
+		switch (modrm.reg.group) {
+			// TEST Ev Iv
+			case 0: {
+				uint16_t result = modrm.modrm.Read16(m_Bus, m_Registers.ds) & Fetch16();
+				SetFlagByValue(Flags::SF, result & 0x8000);
+				SetFlagByValue(Flags::ZF, result == 0);
+				SetFlagByValue(Flags::PF, parity[result & 0xff]);
+				ClearFlag(Flags::CF);
+				ClearFlag(Flags::OF);
+				break;
+			}
+
+			default: {
+				InvalidOpcode();
+			}
+		}
+	};
+
+	// B3 - MOV BL, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.bl = Fetch8();
+	};
+
+	// 75 - JNZ
+	m_Functions[0x75] = [this]() {
+		JumpRelative(!GetFlag(Flags::ZF), static_cast<int8_t>(Fetch8()));
+	};
+
+	// 33 - XOR Gv, Ev
+	m_Functions[0x33] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		uint16_t result = modrm.reg.Read16() ^ modrm.modrm.Read16(m_Bus, m_Registers.ds);
+		modrm.modrm.Write16(m_Bus, m_Registers.ds, result);
+
+		SetFlagByValue(Flags::SF, result & 0x8000);
+		SetFlagByValue(Flags::ZF, result == 0);
+		SetFlagByValue(Flags::PF, parity[result & 0xff]);
+		ClearFlag(Flags::CF);
+		ClearFlag(Flags::OF);
+	};
+
+	// 85 - TEST Gv Ev
+	m_Functions[0x85] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		uint16_t result = modrm.modrm.Read16(m_Bus, m_Registers.ds) & modrm.reg.Read16();
+
+		SetFlagByValue(Flags::SF, result & 0x8000);
+		SetFlagByValue(Flags::ZF, result == 0);
+		SetFlagByValue(Flags::PF, parity[result & 0xff]);
+		ClearFlag(Flags::CF);
+		ClearFlag(Flags::OF);
+	};
 }
 
 ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
@@ -107,6 +163,12 @@ ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
 			case 0b010: result.reg.reg16 = &m_Registers.ss;
 			case 0b011: result.reg.reg16 = &m_Registers.ds;
 		}
+	}
+
+	// REG (group)
+	else if (encoding == RegEncoding::Group) {
+		result.reg.type = RegType::Raw;
+		result.reg.group = reg;
 	}
 
 	// MOD = 00

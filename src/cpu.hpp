@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <memory>
+#include <array>
 
 namespace xe86 {
 	enum class Flags : uint16_t {
@@ -53,12 +54,14 @@ namespace xe86 {
 	enum class RegType {
 		Register8,
 		Register16,
+		Raw,
 	};
 
 	enum class RegEncoding {
 		Register8,
 		Register16,
 		Segment,
+		Group,
 	};
 
 	struct ModRMPart {
@@ -66,9 +69,9 @@ namespace xe86 {
 
 		// only one of these will be used at a time
 		union {
-			uint16_t* reg16;
-			uint8_t* reg8;
-			uint16_t addr;
+			uint16_t* reg16;	// use Read16() instead of accessing this directly
+			uint8_t* reg8;		// use Read8() instead of accessing this directly
+			uint16_t addr;		// use Read16() instead of accessing this directly
 		};
 		
 		uint16_t Read16(std::shared_ptr<Bus> bus, uint16_t segment) {
@@ -123,12 +126,14 @@ namespace xe86 {
 
 		// only one of these will be used at a time
 		union {
-			uint16_t* reg16;
-			uint8_t* reg8;
+			uint16_t* reg16;	// use Read16() instead of accessing this directly
+			uint8_t* reg8;		// use Read8() instead of accessing this directly
+			uint8_t group;		// use Read8() instead of accessing this directly
 		};
 
 		uint16_t Read16() {
 			switch (type) {
+				case RegType::Raw: return group;
 				case RegType::Register16: return *reg16;
 				case RegType::Register8: {
 					std::println(stderr, "reading 8-bit register as 16-bit!!");
@@ -139,6 +144,7 @@ namespace xe86 {
 
 		uint8_t Read8() {
 			switch (type) {
+				case RegType::Raw: return group;
 				case RegType::Register8: return *reg8;
 				case RegType::Register16: {
 					std::println(stderr, "reading 16-bit register as 8-bit!!");
@@ -149,6 +155,7 @@ namespace xe86 {
 
 		void Write16(uint16_t word) {
 			switch (type) {
+				case RegType::Raw: break;
 				case RegType::Register16: *reg16 = word; break;
 				case RegType::Register8: {
 					std::println(stderr, "writing 16-bit value to 8-bit register!!");
@@ -160,6 +167,7 @@ namespace xe86 {
 
 		void Write8(uint8_t byte) {
 			switch (type) {
+				case RegType::Raw: break;
 				case RegType::Register8: *reg8 = byte; break;
 				case RegType::Register16: {
 					std::println(stderr, "writing 8-bit value to 16-bit register!!");
@@ -173,6 +181,24 @@ namespace xe86 {
 	struct ModRM {
 		ModRMPart modrm;
 		RegPart reg;
+	};
+
+	static std::array<bool, 256> parity = {
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		true, false, false, true, false, true, true, false, false, true, true, false, true, false, false, true,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false,
+		false, true, true, false, true, false, false, true, true, false, false, true, false, true, true, false
 	};
 
 	class CPU : public Component {
@@ -198,6 +224,14 @@ namespace xe86 {
 		void InvalidOpcode();
 		void SetOpcodes();
 
+	private:
+		void JumpRelative(bool condition, int8_t rel) {
+			if (condition) {
+				m_Registers.ip += rel;
+			}
+		}
+
+	private:
 		ModRM FetchModRM(bool w, RegEncoding encoding);
 
 		uint8_t Fetch8() {
@@ -217,6 +251,15 @@ namespace xe86 {
 
 		void SetFlag(Flags flag) {
 			m_Registers.flags = static_cast<Flags>(static_cast<uint16_t>(m_Registers.flags) | static_cast<uint16_t>(flag));
+		}
+
+		void SetFlagByValue(Flags flag, bool condition) {
+			if (condition) SetFlag(flag);
+			else ClearFlag(flag);
+		}
+
+		bool GetFlag(Flags flag) {
+			return (static_cast<uint16_t>(m_Registers.flags) & static_cast<uint16_t>(flag)) != 0;
 		}
 
 		void Dump() {
