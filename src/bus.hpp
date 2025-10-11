@@ -123,6 +123,15 @@ namespace xe86 {
 			std::println(stderr, "emulator: writing to unknown port {:02x} -> {:02x}", byte, port);
 		}
 
+		uint16_t ReadWordFromPort(PortAddress16 port) {
+			return (ReadByteFromPort(port + 1) << 8) | ReadByteFromPort(port);
+		}
+
+		void WriteWordToPort(PortAddress16 port, uint16_t word) {
+			WriteByteToPort(port + 0, (word >> 0) & 0xff);
+			WriteByteToPort(port + 1, (word >> 8) & 0xff);
+		}
+
 		void AttachPort(PortRegistration&& port) {
 			for (auto& p : m_Ports) {
 				if (p.port == port.port) {

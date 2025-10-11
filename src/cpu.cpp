@@ -273,6 +273,21 @@ void CPU::SetOpcodes() {
 	m_Functions[0xe6] = [this]() {
 		m_Bus->WriteByteToPort(Fetch8(), m_Registers.al);
 	};
+
+	// E7 - OUT Ib, AX
+	m_Functions[0xe7] = [this]() {
+		m_Bus->WriteWordToPort(Fetch8(), m_Registers.ax);
+	};
+
+	// EE - OUT DX, AL
+	m_Functions[0xee] = [this]() {
+		m_Bus->WriteByteToPort(m_Registers.dx, m_Registers.al);
+	};
+
+	// EF - OUT DX, AX
+	m_Functions[0xef] = [this]() {
+		m_Bus->WriteWordToPort(m_Registers.dx, m_Registers.ax);
+	};
 }
 
 ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
