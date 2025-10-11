@@ -44,6 +44,137 @@ namespace xe86 {
 		Flags flags; // FLAGS - flags
 	};
 
+	enum class ModRMType {
+		Address,
+		Register8,
+		Register16,
+	};
+
+	enum class RegType {
+		Register8,
+		Register16,
+	};
+
+	enum class RegEncoding {
+		Register8,
+		Register16,
+		Segment,
+	};
+
+	struct ModRMPart {
+		ModRMType type;
+
+		// only one of these will be used at a time
+		union {
+			uint16_t* reg16;
+			uint8_t* reg8;
+			uint16_t addr;
+		};
+		
+		uint16_t Read16(std::shared_ptr<Bus> bus) {
+			switch (type) {
+				case ModRMType::Address: return bus->ReadWord(addr);
+				case ModRMType::Register16: return *reg16;
+				case ModRMType::Register8: {
+					std::println(stderr, "reading 8-bit register as 16-bit!!");
+					return *reg8;
+				}
+			}
+		}
+
+		uint8_t Read8(std::shared_ptr<Bus> bus) {
+			switch (type) {
+				case ModRMType::Address: return bus->ReadByte(addr);
+				case ModRMType::Register8: return *reg8;
+				case ModRMType::Register16: {
+					std::println(stderr, "reading 16-bit register as 8-bit!!");
+					return *reg16 & 0xff;
+				}
+			}
+		}
+
+		void Write16(std::shared_ptr<Bus> bus, uint16_t word) {
+			switch (type) {
+				case ModRMType::Address: bus->WriteWord(addr, word); break;
+				case ModRMType::Register16: *reg16 = word; break;
+				case ModRMType::Register8: {
+					std::println(stderr, "writing 16-bit value to 8-bit register!!");
+					*reg8 = word & 0xff;
+					break;
+				}
+			}
+		}
+
+		void Write8(std::shared_ptr<Bus> bus, uint8_t byte) {
+			switch (type) {
+				case ModRMType::Address: bus->WriteByte(addr, byte); break;
+				case ModRMType::Register8: *reg8 = byte; break;
+				case ModRMType::Register16: {
+					std::println(stderr, "writing 8-bit value to 16-bit register!!");
+					*reg16 = byte;
+					break;
+				}
+			}
+		}
+	};
+
+	struct RegPart {
+		RegType type;
+
+		// only one of these will be used at a time
+		union {
+			uint16_t* reg16;
+			uint8_t* reg8;
+		};
+
+		uint16_t Read16() {
+			switch (type) {
+				case RegType::Register16: return *reg16;
+				case RegType::Register8: {
+					std::println(stderr, "reading 8-bit register as 16-bit!!");
+					return *reg8;
+				}
+			}
+		}
+
+		uint8_t Read8() {
+			switch (type) {
+				case RegType::Register8: return *reg8;
+				case RegType::Register16: {
+					std::println(stderr, "reading 16-bit register as 8-bit!!");
+					return *reg16 & 0xff;
+				}
+			}
+		}
+
+		void Write16(uint16_t word) {
+			switch (type) {
+				case RegType::Register16: *reg16 = word; break;
+				case RegType::Register8: {
+					std::println(stderr, "writing 16-bit value to 8-bit register!!");
+					*reg8 = word & 0xff;
+					break;
+				}
+			}
+		}
+
+		void Write8(uint8_t byte) {
+			switch (type) {
+				case RegType::Register8: *reg8 = byte; break;
+				case RegType::Register16: {
+					std::println(stderr, "writing 8-bit value to 16-bit register!!");
+					*reg16 = byte;
+					break;
+				}
+			}
+		}
+	};
+
+	struct ModRM {
+		ModRMPart modrm;
+		RegPart reg;
+	};
+
 	class CPU : public Component {
 	public:
 		CPU(std::shared_ptr<Bus> bus) : Component(bus, "CPU") {
@@ -66,6 +197,8 @@ namespace xe86 {
 	private:
 		void InvalidOpcode();
 		void SetOpcodes();
+
+		ModRM FetchModRM(bool w, RegEncoding encoding);
 
 		uint8_t Fetch8() {
 			return m_Bus->ReadByte(Address20(m_Registers.cs, m_Registers.ip++));
