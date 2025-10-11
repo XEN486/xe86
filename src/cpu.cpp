@@ -10,6 +10,7 @@ void CPU::InvalidOpcode() {
 		static_cast<uint32_t>(Address20(m_Registers.cs, m_Registers.ip - 1))
 	);
 
+	Dump();
 	exit(1);
 }
 
@@ -43,19 +44,19 @@ void CPU::SetOpcodes() {
 	// 8B - MOV Gv, Ev
 	m_Functions[0x8b] = [this]() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
-		modrm.reg.Write16(modrm.modrm.Read16(m_Bus));
+		modrm.reg.Write16(modrm.modrm.Read16(m_Bus, m_Registers.ds)); // TODO: the segment can be changed using a segment prefix
 	};
 
 	// 8E - MOV Sw, Ew
 	m_Functions[0x8e] = [this]() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
-		modrm.reg.Write16(modrm.modrm.Read16(m_Bus));
+		modrm.reg.Write16(modrm.modrm.Read16(m_Bus, m_Registers.ds));
 	};
 
 	// 8C - MOV Ew, Sw
 	m_Functions[0x8c] = [this]() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
-		modrm.modrm.Write16(m_Bus, modrm.reg.Read16());
+		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
 	};
 }
 

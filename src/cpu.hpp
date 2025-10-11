@@ -71,9 +71,9 @@ namespace xe86 {
 			uint16_t addr;
 		};
 		
-		uint16_t Read16(std::shared_ptr<Bus> bus) {
+		uint16_t Read16(std::shared_ptr<Bus> bus, uint16_t segment) {
 			switch (type) {
-				case ModRMType::Address: return bus->ReadWord(addr);
+				case ModRMType::Address: return bus->ReadWord((segment * 0x10) + addr);
 				case ModRMType::Register16: return *reg16;
 				case ModRMType::Register8: {
 					std::println(stderr, "reading 8-bit register as 16-bit!!");
@@ -82,9 +82,9 @@ namespace xe86 {
 			}
 		}
 
-		uint8_t Read8(std::shared_ptr<Bus> bus) {
+		uint8_t Read8(std::shared_ptr<Bus> bus, uint16_t segment) {
 			switch (type) {
-				case ModRMType::Address: return bus->ReadByte(addr);
+				case ModRMType::Address: return bus->ReadByte((segment * 0x10) + addr);
 				case ModRMType::Register8: return *reg8;
 				case ModRMType::Register16: {
 					std::println(stderr, "reading 16-bit register as 8-bit!!");
@@ -93,9 +93,9 @@ namespace xe86 {
 			}
 		}
 
-		void Write16(std::shared_ptr<Bus> bus, uint16_t word) {
+		void Write16(std::shared_ptr<Bus> bus, uint16_t segment, uint16_t word) {
 			switch (type) {
-				case ModRMType::Address: bus->WriteWord(addr, word); break;
+				case ModRMType::Address: bus->WriteWord((segment * 0x10) + addr, word); break;
 				case ModRMType::Register16: *reg16 = word; break;
 				case ModRMType::Register8: {
 					std::println(stderr, "writing 16-bit value to 8-bit register!!");
@@ -105,9 +105,9 @@ namespace xe86 {
 			}
 		}
 
-		void Write8(std::shared_ptr<Bus> bus, uint8_t byte) {
+		void Write8(std::shared_ptr<Bus> bus, uint16_t segment, uint8_t byte) {
 			switch (type) {
-				case ModRMType::Address: bus->WriteByte(addr, byte); break;
+				case ModRMType::Address: bus->WriteByte((segment * 0x10) + addr, byte); break;
 				case ModRMType::Register8: *reg8 = byte; break;
 				case ModRMType::Register16: {
 					std::println(stderr, "writing 8-bit value to 16-bit register!!");
@@ -217,6 +217,26 @@ namespace xe86 {
 
 		void SetFlag(Flags flag) {
 			m_Registers.flags = static_cast<Flags>(static_cast<uint16_t>(m_Registers.flags) | static_cast<uint16_t>(flag));
+		}
+
+		void Dump() {
+			std::println(
+				"ax = {:04x} bx = {:04x} cx = {:04x} dx = {:04x}\n"
+				"sp = {:04x} bp = {:04x} si = {:04x} di = {:04x}\n"
+				"cs = {:04x} ds = {:04x} ss = {:04x} es = {:04x}\n"
+				"ip = {:04x} flags = {:016b}\n"
+				"cs:ip = {:04x}:{:04x} ({:05x})",
+
+				static_cast<uint16_t>(m_Registers.ax), static_cast<uint16_t>(m_Registers.bx),
+				static_cast<uint16_t>(m_Registers.cx), static_cast<uint16_t>(m_Registers.dx),
+				static_cast<uint16_t>(m_Registers.sp), static_cast<uint16_t>(m_Registers.bp),
+				static_cast<uint16_t>(m_Registers.si), static_cast<uint16_t>(m_Registers.di),
+				static_cast<uint16_t>(m_Registers.cs), static_cast<uint16_t>(m_Registers.ds),
+				static_cast<uint16_t>(m_Registers.ss), static_cast<uint16_t>(m_Registers.es),
+				static_cast<uint16_t>(m_Registers.ip), static_cast<uint16_t>(m_Registers.flags),
+				static_cast<uint16_t>(m_Registers.cs), static_cast<uint16_t>(m_Registers.ip),
+				(m_Registers.cs * 0x10) + m_Registers.ip
+			);
 		}
 		
 	private:
