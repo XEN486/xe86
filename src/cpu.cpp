@@ -36,15 +36,34 @@ void CPU::SetOpcodes() {
 		ClearFlag(Flags::DF); // direction flag
 	};
 
-	// B8 - MOV AX, Iv
-	m_Functions[0xb8] = [this]() {
-		m_Registers.ax = Fetch16();
+	// 88 - MOV Eb, Gb
+	m_Functions[0x88] = [this]() {
+		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		modrm.modrm.Write8(m_Bus, m_Registers.ds, modrm.reg.Read8());
+	};
+
+	// 89 - MOV Ev, Gv
+	m_Functions[0x89] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
+	};
+
+	// 8A - MOV Gb, Eb
+	m_Functions[0x8a] = [this]() {
+		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		modrm.reg.Write8(modrm.modrm.Read8(m_Bus, m_Registers.ds));
 	};
 
 	// 8B - MOV Gv, Ev
 	m_Functions[0x8b] = [this]() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
 		modrm.reg.Write16(modrm.modrm.Read16(m_Bus, m_Registers.ds)); // TODO: the segment can be changed using a segment prefix
+	};
+
+	// 8C - MOV Ew, Sw
+	m_Functions[0x8c] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
+		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
 	};
 
 	// 8E - MOV Sw, Ew
@@ -57,6 +76,146 @@ void CPU::SetOpcodes() {
 	m_Functions[0x8c] = [this]() {
 		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
+	};
+
+	// A0 - MOV AL, Ob
+	m_Functions[0xa0] = [this]() {
+		m_Registers.al = m_Bus->ReadByte((m_Registers.ds * 0x10) + Fetch16());
+	};
+
+	// A1 - MOV AX, Ov
+	m_Functions[0xa1] = [this]() {
+		m_Registers.ax = m_Bus->ReadWord((m_Registers.ds * 0x10) + Fetch16());
+	};
+
+	// A2 - MOV Ob, AL
+	m_Functions[0xa2] = [this]() {
+		uint16_t addr = (m_Registers.ds * 0x10) + Fetch16();
+		m_Bus->WriteByte(addr, m_Registers.al);
+	};
+
+	// A3 - MOV Ov, AX
+	m_Functions[0xa3] = [this]() {
+		uint16_t addr = (m_Registers.ds * 0x10) + Fetch16();
+		m_Bus->WriteWord(addr, m_Registers.ax);
+	};
+
+	// A4 - MOVSB
+	m_Functions[0xa4] = [this]() {
+		m_Bus->WriteByte((m_Registers.es * 0x10) + m_Registers.di, m_Bus->ReadByte((m_Registers.ds * 0x10) + m_Registers.si));
+
+		if (GetFlag(Flags::DF)) {
+			m_Registers.si--;
+			m_Registers.di--;
+		} else {
+			m_Registers.si++;
+			m_Registers.di++;
+		}
+	};
+
+	// A5 - MOVSW
+	m_Functions[0xa5] = [this]() {
+		m_Bus->WriteWord((m_Registers.es * 0x10) + m_Registers.di, m_Bus->ReadWord((m_Registers.ds * 0x10) + m_Registers.si));
+
+		if (GetFlag(Flags::DF)) {
+			m_Registers.si -= 2;
+			m_Registers.di -= 2;
+		} else {
+			m_Registers.si += 2;
+			m_Registers.di += 2;
+		}
+	};
+
+	// B0 - MOV AL, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.al = Fetch8();
+	};
+
+	// B1 - MOV CL, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.cl = Fetch8();
+	};
+
+	// B2 - MOV DL, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.dl = Fetch8();
+	};
+
+	// B3 - MOV BL, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.bl = Fetch8();
+	};
+
+	// B4 - MOV AH, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.ah = Fetch8();
+	};
+
+	// B5 - MOV CH, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.ch = Fetch8();
+	};
+
+	// B6 - MOV DH, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.dh = Fetch8();
+	};
+
+	// B7 - MOV BH, Ib
+	m_Functions[0xb3] = [this]() {
+		m_Registers.bh = Fetch8();
+	};
+
+	// B8 - MOV AX, Iv
+	m_Functions[0xb8] = [this]() {
+		m_Registers.ax = Fetch16();
+	};
+
+	// B9 - MOV CX, Iv
+	m_Functions[0xb9] = [this]() {
+		m_Registers.cx = Fetch16();
+	};
+
+	// BA - MOV DX, Iv
+	m_Functions[0xba] = [this]() {
+		m_Registers.dx = Fetch16();
+	};
+
+	// BB - MOV BX, Iv
+	m_Functions[0xbb] = [this]() {
+		m_Registers.bx = Fetch16();
+	};
+
+	// BC - MOV SP, Iv
+	m_Functions[0xbc] = [this]() {
+		m_Registers.sp = Fetch16();
+	};
+
+	// BD - MOV BP, Iv
+	m_Functions[0xbd] = [this]() {
+		m_Registers.bp = Fetch16();
+	};
+
+	// BE - MOV SI, Iv
+	m_Functions[0xbe] = [this]() {
+		m_Registers.si = Fetch16();
+	};
+
+	// BF - MOV DI, Iv
+	m_Functions[0xbf] = [this]() {
+		m_Registers.di = Fetch16();
+	};
+
+	// C6 - MOV Eb, Ib
+	m_Functions[0xc6] = [this]() {
+		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		modrm.modrm.Write8(m_Bus, m_Registers.ds, Fetch8());
+	};
+
+	// C7 - MOV Ev, Iv
+	m_Functions[0xc7] = [this]() {
+		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		modrm.modrm.Write16(m_Bus, m_Registers.ds, Fetch16());
 	};
 
 	// F7 - GRP3b Ev
@@ -78,11 +237,6 @@ void CPU::SetOpcodes() {
 				InvalidOpcode();
 			}
 		}
-	};
-
-	// B3 - MOV BL, Ib
-	m_Functions[0xb3] = [this]() {
-		m_Registers.bl = Fetch8();
 	};
 
 	// 75 - JNZ
