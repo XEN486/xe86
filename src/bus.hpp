@@ -6,6 +6,7 @@
 #include <string>
 #include <print>
 #include <memory>
+#include <functional>
 
 namespace xe86 {
 	class MemoryArea {
@@ -65,6 +66,12 @@ namespace xe86 {
 		bool m_Writable;
 	};
 
+	struct PortRegistration {
+		std::function<void(uint8_t)> write;
+		std::function<uint8_t()> read;
+		PortAddress16 port;
+	};
+
 	/*
 	SYSTEM MEMORY MAP
 		FFFFF - [TOP OF ADDRESS SPACE]			__
@@ -95,12 +102,45 @@ namespace xe86 {
 			WriteByte(address + 1, (word >> 8) & 0xff);
 		}
 
+		uint8_t ReadByteFromPort(PortAddress16 port) {
+			for (auto& p : m_Ports) {
+				if (p.port == port) {
+					return p.read();
+				}
+			}
+
+			std::println(stderr, "emulator: reading from unknown port {:02x}", port);
+			return 0;
+		}
+
+		void WriteByteToPort(PortAddress16 port, uint8_t byte) {
+			for (auto& p : m_Ports) {
+				if (p.port == port) {
+					return p.write(byte);
+				}
+			}
+
+			std::println(stderr, "emulator: writing to unknown port {:02x} -> {:02x}", byte, port);
+		}
+
+		void AttachPort(PortRegistration&& port) {
+			for (auto& p : m_Ports) {
+				if (p.port == port.port) {
+					std::println(stderr, "emulator: trying to reregister port {:02x}", port.port);
+					return;
+				}
+			}
+
+			m_Ports.push_back(std::move(port));
+		}
+
 		void AttachMemoryArea(std::shared_ptr<MemoryArea> area) {
 			m_Memory.push_back(area);
 		}
 
 	private:
 		std::vector<std::shared_ptr<MemoryArea>> m_Memory;
+		std::vector<PortRegistration> m_Ports;
 		std::shared_ptr<MemoryArea> FindArea(Address20 address);
 	};
 }

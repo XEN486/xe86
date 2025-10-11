@@ -114,6 +114,11 @@ void CPU::SetOpcodes() {
 		ClearFlag(Flags::CF);
 		ClearFlag(Flags::OF);
 	};
+
+	// E6 - OUT Ib, AL
+	m_Functions[0xe6] = [this]() {
+		m_Bus->WriteByteToPort(Fetch8(), m_Registers.al);
+	};
 }
 
 ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
