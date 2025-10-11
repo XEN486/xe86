@@ -127,17 +127,17 @@ void CPU::SetOpcodes() {
 	};
 
 	// B0 - MOV AL, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb0] = [this]() {
 		m_Registers.al = Fetch8();
 	};
 
 	// B1 - MOV CL, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb1] = [this]() {
 		m_Registers.cl = Fetch8();
 	};
 
 	// B2 - MOV DL, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb2] = [this]() {
 		m_Registers.dl = Fetch8();
 	};
 
@@ -147,22 +147,22 @@ void CPU::SetOpcodes() {
 	};
 
 	// B4 - MOV AH, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb4] = [this]() {
 		m_Registers.ah = Fetch8();
 	};
 
 	// B5 - MOV CH, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb5] = [this]() {
 		m_Registers.ch = Fetch8();
 	};
 
 	// B6 - MOV DH, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb6] = [this]() {
 		m_Registers.dh = Fetch8();
 	};
 
 	// B7 - MOV BH, Ib
-	m_Functions[0xb3] = [this]() {
+	m_Functions[0xb7] = [this]() {
 		m_Registers.bh = Fetch8();
 	};
 
