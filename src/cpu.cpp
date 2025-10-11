@@ -288,6 +288,102 @@ void CPU::SetOpcodes() {
 	m_Functions[0xef] = [this]() {
 		m_Bus->WriteWordToPort(m_Registers.dx, m_Registers.ax);
 	};
+
+	// 40 - INC AX
+	m_Functions[0x40] = [this]() {
+		uint16_t original = m_Registers.ax;
+		m_Registers.ax++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.ax == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.ax & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.ax == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.ax & 0xff]);
+	};
+
+	// 41 - INC CX
+	m_Functions[0x41] = [this]() {
+		uint16_t original = m_Registers.cx;
+		m_Registers.cx++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.cx == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.cx & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.cx == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.cx & 0xff]);
+	};
+
+	// 42 - INC DX
+	m_Functions[0x42] = [this]() {
+		uint16_t original = m_Registers.dx;
+		m_Registers.dx++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.dx == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.dx & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.dx == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.dx & 0xff]);
+	};
+
+	// 43 - INC BX
+	m_Functions[0x43] = [this]() {
+		uint16_t original = m_Registers.bx;
+		m_Registers.bx++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.bx == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.bx & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.bx == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.bx & 0xff]);
+	};
+
+	// 44 - INC SP
+	m_Functions[0x44] = [this]() {
+		uint16_t original = m_Registers.sp;
+		m_Registers.sp++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.sp == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.sp & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.sp == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.sp & 0xff]);
+	};
+
+	// 45 - INC BP
+	m_Functions[0x45] = [this]() {
+		uint16_t original = m_Registers.bp;
+		m_Registers.bp++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.bp == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.bp & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.bp == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.bp & 0xff]);
+	};
+
+	// 46 - INC SI
+	m_Functions[0x46] = [this]() {
+		uint16_t original = m_Registers.si;
+		m_Registers.si++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.si == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.si & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.si == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.si & 0xff]);
+	};
+
+	// 47 - INC DI
+	m_Functions[0x47] = [this]() {
+		uint16_t original = m_Registers.di;
+		m_Registers.di++;
+		
+		SetFlagByValue(Flags::OF, m_Registers.di == 0x8000);
+		SetFlagByValue(Flags::SF, m_Registers.di & 0x8000);
+		SetFlagByValue(Flags::ZF, m_Registers.di == 0);
+		SetFlagByValue(Flags::AF, ((original & 0x0f) + 1) > 0x0f);
+		SetFlagByValue(Flags::PF, parity[m_Registers.di & 0xff]);
+	};
 }
 
 ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
