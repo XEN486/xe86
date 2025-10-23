@@ -231,6 +231,12 @@ namespace xe86 {
 			}
 		}
 
+		void JumpRelative16(bool condition, int16_t rel) {
+			if (condition) {
+				m_Registers.ip += rel;
+			}
+		}
+
 	private:
 		ModRM FetchModRM(bool w, RegEncoding encoding);
 
