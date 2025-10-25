@@ -38,37 +38,37 @@ void CPU::SetOpcodes() {
 
 	// MOV Eb, Gb
 	m_Functions[0x88] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		modrm.modrm.Write8(m_Bus, m_Registers.ds, modrm.reg.Read8());
 	};
 
 	// MOV Ev, Gv
 	m_Functions[0x89] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
 	};
 
 	// MOV Gb, Eb
 	m_Functions[0x8a] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		modrm.reg.Write8(modrm.modrm.Read8(m_Bus, m_Registers.ds));
 	};
 
 	// MOV Gv, Ev
 	m_Functions[0x8b] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		modrm.reg.Write16(modrm.modrm.Read16(m_Bus, m_Registers.ds)); // TODO: the segment can be changed using a segment prefix
 	};
 
 	// MOV Ew, Sw
 	m_Functions[0x8c] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
+		ModRM modrm = FetchModRM(RegEncoding::Segment);
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, modrm.reg.Read16());
 	};
 
 	// MOV Sw, Ew
 	m_Functions[0x8e] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Segment);
+		ModRM modrm = FetchModRM(RegEncoding::Segment);
 		modrm.reg.Write16(modrm.modrm.Read16(m_Bus, m_Registers.ds));
 	};
 
@@ -202,19 +202,20 @@ void CPU::SetOpcodes() {
 
 	// MOV Eb, Ib
 	m_Functions[0xc6] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		modrm.modrm.Write8(m_Bus, m_Registers.ds, Fetch8());
 	};
 
 	// MOV Ev, Iv
 	m_Functions[0xc7] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, Fetch16());
 	};
 
 	// GRP3b Ev
 	m_Functions[0xf7] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Group);
+		ModRM modrm = FetchModRM(RegEncoding::Group);
+
 		switch (modrm.reg.group) {
 			// TEST Ev Iv
 			case 0: {
@@ -235,7 +236,7 @@ void CPU::SetOpcodes() {
 
 	// XOR Gv, Ev
 	m_Functions[0x33] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.reg.Read16() ^ modrm.modrm.Read16(m_Bus, m_Registers.ds);
 		modrm.reg.Write16(result);
 
@@ -248,7 +249,7 @@ void CPU::SetOpcodes() {
 
 	// TEST Gv Ev
 	m_Functions[0x85] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.modrm.Read16(m_Bus, m_Registers.ds) & modrm.reg.Read16();
 
 		SetFlagByValue(Flags::SF, result & 0x8000);
@@ -472,7 +473,7 @@ void CPU::SetOpcodes() {
 
 	// GRP1 Ev, Iv
 	m_Functions[0x81] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Group);
+		ModRM modrm = FetchModRM(RegEncoding::Group);
 		switch (modrm.reg.group) {
 			// CMP Ev, Iv
 			case 7: {
@@ -518,7 +519,7 @@ void CPU::SetOpcodes() {
 
 	// AND Eb, Gb
 	m_Functions[0x20] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t result = modrm.modrm.Read8(m_Bus, m_Registers.ds) & modrm.reg.Read8();
 		modrm.modrm.Write8(m_Bus, m_Registers.ds, result);
 
@@ -532,7 +533,7 @@ void CPU::SetOpcodes() {
 
 	// AND Ev, Gv
 	m_Functions[0x21] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.modrm.Read16(m_Bus, m_Registers.ds) & modrm.reg.Read16();
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, result);
 		
@@ -546,7 +547,7 @@ void CPU::SetOpcodes() {
 
 	// AND Gb, Eb
 	m_Functions[0x22] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t result = modrm.reg.Read8() & modrm.modrm.Read8(m_Bus, m_Registers.ds);
 		modrm.reg.Write8(result);
 
@@ -560,7 +561,7 @@ void CPU::SetOpcodes() {
 
 	// AND Gv, Ev
 	m_Functions[0x23] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.reg.Read16() & modrm.modrm.Read16(m_Bus, m_Registers.ds);
 		modrm.reg.Write16(result);
 
@@ -600,7 +601,7 @@ void CPU::SetOpcodes() {
 
 	// OR Eb, Gb
 	m_Functions[0x08] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t result = modrm.modrm.Read8(m_Bus, m_Registers.ds) | modrm.reg.Read8();
 		modrm.modrm.Write8(m_Bus, m_Registers.ds, result);
 
@@ -614,7 +615,7 @@ void CPU::SetOpcodes() {
 
 	// OR Ev, Gv
 	m_Functions[0x09] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.modrm.Read16(m_Bus, m_Registers.ds) | modrm.reg.Read16();
 		modrm.modrm.Write16(m_Bus, m_Registers.ds, result);
 		
@@ -628,7 +629,7 @@ void CPU::SetOpcodes() {
 
 	// OR Gb, Eb
 	m_Functions[0x0a] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t result = modrm.reg.Read8() | modrm.modrm.Read8(m_Bus, m_Registers.ds);
 		modrm.reg.Write8(result);
 
@@ -642,7 +643,7 @@ void CPU::SetOpcodes() {
 
 	// OR Gv, Ev
 	m_Functions[0x0b] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t result = modrm.reg.Read16() | modrm.modrm.Read16(m_Bus, m_Registers.ds);
 		modrm.reg.Write16(result);
 
@@ -784,7 +785,7 @@ void CPU::SetOpcodes() {
 
 	// ADD Eb, Gb
 	m_Functions[0x00] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t src1 = modrm.modrm.Read8(m_Bus, m_Registers.ds);
 		uint8_t src2 = modrm.reg.Read8();
 		uint8_t result = src1 + src2;
@@ -801,7 +802,7 @@ void CPU::SetOpcodes() {
 
 	// ADD Ev, Gv
 	m_Functions[0x01] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t src1 = modrm.modrm.Read16(m_Bus, m_Registers.ds);
 		uint16_t src2 = modrm.reg.Read16();
 		uint16_t result = src1 + src2;
@@ -818,7 +819,7 @@ void CPU::SetOpcodes() {
 
 	// ADD Gb, Eb
 	m_Functions[0x02] = [this]() {
-		ModRM modrm = FetchModRM(false, RegEncoding::Register8);
+		ModRM modrm = FetchModRM(RegEncoding::Register8);
 		uint8_t src1 = modrm.reg.Read8();
 		uint8_t src2 = modrm.modrm.Read8(m_Bus, m_Registers.ds);
 		uint8_t result = src1 + src2;
@@ -833,9 +834,9 @@ void CPU::SetOpcodes() {
 		SetFlagByValue(Flags::PF, parity[result]);
 	};
 
-	// ADD Ev, Gv
+	// ADD Gv, Ev
 	m_Functions[0x03] = [this]() {
-		ModRM modrm = FetchModRM(true, RegEncoding::Register16);
+		ModRM modrm = FetchModRM(RegEncoding::Register16);
 		uint16_t src1 = modrm.reg.Read16();
 		uint16_t src2 = modrm.modrm.Read16(m_Bus, m_Registers.ds);
 		uint16_t result = src1 + src2;
@@ -941,10 +942,10 @@ ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
 	else if (encoding == RegEncoding::Segment) {
 		result.reg.type = RegType::Register16;
 		switch (reg) {
-			case 0b000: result.reg.reg16 = &m_Registers.es;
-			case 0b001: result.reg.reg16 = &m_Registers.cs;
-			case 0b010: result.reg.reg16 = &m_Registers.ss;
-			case 0b011: result.reg.reg16 = &m_Registers.ds;
+			case 0b000: result.reg.reg16 = &m_Registers.es; break;
+			case 0b001: result.reg.reg16 = &m_Registers.cs; break;
+			case 0b010: result.reg.reg16 = &m_Registers.ss; break;
+			case 0b011: result.reg.reg16 = &m_Registers.ds; break;
 		}
 	}
 
@@ -974,15 +975,16 @@ ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
 	// MOD = 01
 	else if (mod == 0b01) {
 		result.modrm.type = ModRMType::Address;
+		int8_t disp = static_cast<int8_t>(Fetch8());
 		switch (rm) {
-			case 0b000: result.modrm.addr = m_Registers.bx + m_Registers.si + Fetch8(); break;
-			case 0b001: result.modrm.addr = m_Registers.bx + m_Registers.di + Fetch8(); break;
-			case 0b010: result.modrm.addr = m_Registers.bp + m_Registers.si + Fetch8(); break;
-			case 0b011: result.modrm.addr = m_Registers.bp + m_Registers.di + Fetch8(); break;
-			case 0b100: result.modrm.addr = m_Registers.si + Fetch8(); break;
-			case 0b101: result.modrm.addr = m_Registers.di + Fetch8(); break;
-			case 0b110: result.modrm.addr = m_Registers.bp + Fetch8(); break;
-			case 0b111: result.modrm.addr = m_Registers.bx + Fetch8(); break;
+			case 0b000: result.modrm.addr = m_Registers.bx + m_Registers.si + disp; break;
+			case 0b001: result.modrm.addr = m_Registers.bx + m_Registers.di + disp; break;
+			case 0b010: result.modrm.addr = m_Registers.bp + m_Registers.si + disp; break;
+			case 0b011: result.modrm.addr = m_Registers.bp + m_Registers.di + disp; break;
+			case 0b100: result.modrm.addr = m_Registers.si + disp; break;
+			case 0b101: result.modrm.addr = m_Registers.di + disp; break;
+			case 0b110: result.modrm.addr = m_Registers.bp + disp; break;
+			case 0b111: result.modrm.addr = m_Registers.bx + disp; break;
 		}
 
 		return result;
@@ -1040,6 +1042,6 @@ ModRM CPU::FetchModRM(bool w, RegEncoding encoding) {
 
 void CPU::Step() {
 	uint8_t opcode = Fetch8();
-	std::println("{:02x}", opcode);
+	//std::println("{:02x}", opcode);
 	m_Functions[opcode]();
 }

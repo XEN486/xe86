@@ -239,6 +239,14 @@ namespace xe86 {
 
 	private:
 		ModRM FetchModRM(bool w, RegEncoding encoding);
+		
+		ModRM FetchModRM(RegEncoding encoding) {
+			if (encoding == RegEncoding::Register8) {
+				return FetchModRM(false, encoding);
+			}
+
+			return FetchModRM(true, encoding);
+		}
 
 		uint8_t Fetch8() {
 			return m_Bus->ReadByte(Address20(m_Registers.cs, m_Registers.ip++));
